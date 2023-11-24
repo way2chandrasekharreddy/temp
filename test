@@ -1,40 +1,167 @@
-package com.fisglobal.CTI_TransferData.model;
+Select * from SFTDB.APPL_USER where UPPER(EMAIL_AD_TX) = (
+						Select UPPER(CTC.CTC_EMAIL_AD_TX) 
+						from SFTDB.WORK_GRP_CTC_MAP WGCM
+						INNER JOIN SFTDB.CTC CTC
+						ON WGCM.CTC_ID = CTC.CTC_ID
+						and WGCM.WORK_GRP_ID = 665475 
+						and WGCM.CTC_TYPE_ID = 1 )
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+package com.aexp.sft.config.common.dao.entity;
 
-@Getter
-@Setter
-@ToString
-public class CTITransferDataRequest {
+import lombok.Data;
 
-    @NotBlank(message="ivrInteractionId cannot be blank")
-    @NotNull(message="ivrInteractionId cannot be null")
-    private String ivrInteractionId;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
-    private String acdInteractionId;
+import static com.aexp.sft.config.common.dao.util.CommonDaoConstants.POA_DB_SCHEMA;
 
-    private MerchantAuthJson merchantAuthJson;
+@Data
+@Entity
+@Table(name = "APPL_USER", schema = POA_DB_SCHEMA)
+public class ApplUser extends BaseEntity {
 
-    private CTIDataJson ctiDataJson;
+	@Id
+	@Column(name = "APPL_USER_ID")
+	private Long applUserId;
 
-    private String targetNLPInteractionId;
+	@Column(name = "SSO_GLBL_USER_ID")
+	private String ssoGlobalUserId;
 
-    private String iscCode;
+	@Column(name = "ADS_ID")
+	private String adsId;
 
-    private String createdBy;
+	@Column(name = "ACT_STA_ID")
+	private Integer actStaId;
+
+	@Column(name = "EMP_FIRST_NM")
+	private String empFName;
+
+	@Column(name = "EMP_LST_NM")
+	private String empLName;
+
+	@Column(name = "TZ_ID")
+	private String tzId;
+
+	@Column(name = "ISO_ALPHA_2_CTRY_CD")
+	private String isoAlpha2CountryCode;
+
+	@Column(name = "EMAIL_AD_TX")
+	private String emailAd;
+
+	@Column(name = "LST_LOGIN_TS")
+	private LocalDateTime lstLoginTS;
+
+	@Column(name = "EMP_OR_CNTRCT_NO")
+	private String empOrContractorNum;
+
+	@Column(name = "MGR_EMAIL_AD_TX")
+	private String mgrEmailAddr;
+
+	@Column(name = "DEPT_NM")
+	private String deptNm;
+
+	@Column(name = "MGR_FIRST_NM")
+	private String mgrFName;
+
+	@Column(name = "MGR_LST_NM")
+	private String mgrLName;
+
+	@Column(name = "PHONE_NO")
+	private String phoneNum;
+
 
 }
-{
-  "ivrInteractionId": "sampleIvrInteractionId",
-  "acdInteractionId": "sampleAcdInteractionId",
-  "merchantAuthJson": null,
-  "ctiDataJson": null,
-  "targetNLPInteractionId": "sampleTargetNLPInteractionId",
-  "iscCode": "sampleIscCode",
-  "createdBy": "sampleCreatedBy"
+
+
+package com.aexp.sft.config.common.dao.entity.workgrp;
+
+import com.aexp.sft.config.common.dao.entity.AuditBaseEntity;
+import com.aexp.sft.config.common.dao.entity.Ctc;
+import com.aexp.sft.config.common.dao.entity.CtcType;
+import lombok.Data;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import java.io.Serializable;
+import java.util.Objects;
+
+import static com.aexp.sft.config.common.dao.util.CommonDaoConstants.POA_DB_SCHEMA;
+
+@Data
+@Entity
+@Table(name = "WORK_GRP_CTC_MAP", schema = POA_DB_SCHEMA)
+@SuppressWarnings({"java:S1948","java:S2259"})
+public class WorkGrpCtcMap extends AuditBaseEntity implements Serializable {
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -7345506436272752812L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "WORK_GRP_CTC_MAP_ID")
+	private Long workGrpCtcMapId;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "WORK_GRP_ID")
+	private Workgroup workgroup;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "CTC_ID", referencedColumnName = "CTC_ID", nullable = false)
+	private Ctc ctc;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "CTC_TYPE_ID", referencedColumnName = "CTC_TYPE_ID", nullable = false)
+	private CtcType ctcType;
+
+	@Column(name = "ACT_IN")
+	private Character actIn;
+
+// Column not present in FSDB Schema
+//	@OneToOne
+//	@JoinColumn(name = "EXCPT_ID", referencedColumnName = "EXCPT_ID", nullable = true)
+//	private Excpt excpt;
+
+
+
+    @PreRemove
+    @PreUpdate
+    @PrePersist
+    private void handle() {
+    	this.workgroup.setLstUpdTS(lstUpdTS);;
+    }
+
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (getClass() != obj.getClass())
+			return false;
+		WorkGrpCtcMap other = (WorkGrpCtcMap) obj;
+		return Objects.equals(ctc, other.ctc) && Objects.equals(ctcType, other.ctcType)
+				&& Objects.equals(workGrpCtcMapId, other.workGrpCtcMapId);
+	}
+
+
+
+	@Override
+	public int hashCode() {
+		return  Objects.hash(workGrpCtcMapId);
+	}
+
+
 }
