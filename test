@@ -165,3 +165,22 @@ public class WorkGrpCtcMap extends AuditBaseEntity implements Serializable {
 
 
 }
+
+
+
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface ApplUserRepository extends JpaRepository<ApplUser, Long> {
+
+    @Query("SELECT au FROM ApplUser au " +
+           "WHERE UPPER(au.emailAd) = " +
+           "(SELECT UPPER(ctc.ctcEmailAdTx) " +
+           " FROM WorkGrpCtcMap wgcm " +
+           " INNER JOIN Ctc ctc ON wgcm.ctc.ctcId = ctc.ctcId " +
+           " WHERE wgcm.workgroup.workGrpId = :workGrpId " +
+           "   AND wgcm.ctcType.ctcTypeId = 1)")
+    List<ApplUser> findApplUsersByWorkGrpId(@Param("workGrpId") Long workGrpId);
+}
+
